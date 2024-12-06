@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 class TicTacToeGUI {
     private JFrame frame;
     private JButton[] buttons;
+    private JLabel statusLabel;
+    private JButton resetButton;
     private boolean isXTurn;
 
     public TicTacToeGUI() {
@@ -18,16 +20,39 @@ class TicTacToeGUI {
 
     private void initialize() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 400);
-        frame.setLayout(new GridLayout(3, 3));
+        frame.setSize(400, 500);
+        frame.setLayout(new BorderLayout());
+
+        // Game Board
+        JPanel boardPanel = new JPanel();
+        boardPanel.setLayout(new GridLayout(3, 3));
+        boardPanel.setBackground(new Color(240, 240, 240));
 
         for (int i = 0; i < 9; i++) {
             buttons[i] = new JButton("");
             buttons[i].setFont(new Font("Arial", Font.BOLD, 60));
             buttons[i].setFocusPainted(false);
+            buttons[i].setBackground(Color.WHITE);
             buttons[i].addActionListener(new ButtonClickListener(i));
-            frame.add(buttons[i]);
+            boardPanel.add(buttons[i]);
         }
+
+        // Status Panel
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new BorderLayout());
+
+        statusLabel = new JLabel("Player X's Turn", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        statusPanel.add(statusLabel, BorderLayout.CENTER);
+
+        resetButton = new JButton("Reset");
+        resetButton.setFont(new Font("Arial", Font.BOLD, 14));
+        resetButton.addActionListener(e -> resetBoard());
+        statusPanel.add(resetButton, BorderLayout.EAST);
+
+        // Add panels to the frame
+        frame.add(boardPanel, BorderLayout.CENTER);
+        frame.add(statusPanel, BorderLayout.SOUTH);
 
         frame.setVisible(true);
     }
@@ -46,14 +71,18 @@ class TicTacToeGUI {
             }
 
             buttons[index].setText(isXTurn ? "X" : "O");
+            buttons[index].setForeground(isXTurn ? Color.BLUE : Color.RED);
+
             if (checkWin()) {
-                JOptionPane.showMessageDialog(frame, (isXTurn ? "X" : "O") + " Wins!");
-                resetBoard();
+                statusLabel.setText((isXTurn ? "Player X" : "Player O") + " Wins!");
+                highlightWinningButtons();
+                disableButtons();
             } else if (isBoardFull()) {
-                JOptionPane.showMessageDialog(frame, "It's a Draw!");
-                resetBoard();
+                statusLabel.setText("It's a Draw!");
+                disableButtons();
             } else {
                 isXTurn = !isXTurn; // Switch turn
+                statusLabel.setText("Player " + (isXTurn ? "X" : "O") + "'s Turn");
             }
         }
     }
@@ -75,6 +104,25 @@ class TicTacToeGUI {
         return false;
     }
 
+    private void highlightWinningButtons() {
+        int[][] winConditions = {
+                {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
+                {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
+                {0, 4, 8}, {2, 4, 6}             // Diagonals
+        };
+
+        for (int[] condition : winConditions) {
+            if (!buttons[condition[0]].getText().isEmpty() &&
+                    buttons[condition[0]].getText().equals(buttons[condition[1]].getText()) &&
+                    buttons[condition[0]].getText().equals(buttons[condition[2]].getText())) {
+                for (int i : condition) {
+                    buttons[i].setBackground(new Color(173, 216, 230)); // Highlight buttons
+                }
+                break;
+            }
+        }
+    }
+
     private boolean isBoardFull() {
         for (JButton button : buttons) {
             if (button.getText().isEmpty()) {
@@ -84,14 +132,24 @@ class TicTacToeGUI {
         return true;
     }
 
+    private void disableButtons() {
+        for (JButton button : buttons) {
+            button.setEnabled(false);
+        }
+    }
+
     private void resetBoard() {
         for (JButton button : buttons) {
             button.setText("");
+            button.setBackground(Color.WHITE);
+            button.setEnabled(true);
         }
         isXTurn = true; // Reset turn to X
+        statusLabel.setText("Player X's Turn");
     }
 
     public static void main(String[] args) {
         new TicTacToeGUI();
     }
 }
+
